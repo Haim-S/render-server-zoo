@@ -23,7 +23,7 @@ exports.createAnimal = async (req, res) => {
             data: await Animal.find()
         })
     } catch (error) {
-        
+        res.status(400).send(error);
     }
 }
 

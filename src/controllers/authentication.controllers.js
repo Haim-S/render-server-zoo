@@ -29,7 +29,21 @@ exports.login = async (req, res, next) => {
 exports.register = async (req, res, next) => {
     try {
         await User.create(req.body);
-        return res.redirect(307, "/auth/login");
+        
+        const {email, password} = req.body;
+        const user = await User.findOne({email});
+        
+        if(!user) return res.status(404).send({ ok: false, message: "Not found" });
+        const isPasswordMatch = await user.comparePassword(password);
+       
+        if(!isPasswordMatch) return res.status(403).send({ ok: false, message: "The password is incorrect" });
+        const accessToken = JwtTokenService.createAccessToken(user._id);
+        const refreshToken = JwtTokenService.createRefreshToken(user._id);
+        user.setJwtTokens(accessToken, refreshToken);
+        const userWithoutPassword = { ...user._doc };
+        delete userWithoutPassword.password;
+        // const userWithoutPassword = await User.updateOne(user, {password: undefined})
+        res.send(userWithoutPassword);
     } catch (error) {
         res.send(error.message);
     }
