@@ -11,7 +11,7 @@ exports.login = async (req, res, next) => {
         
         if(!user) return res.status(404).send({ ok: false, message: "Not found" });
         const isPasswordMatch = await user.comparePassword(password);
-       console.log(isPasswordMatch);
+       
         if(!isPasswordMatch) return res.status(403).send({ ok: false, message: "The password is incorrect" });
         const accessToken = JwtTokenService.createAccessToken(user._id);
         const refreshToken = JwtTokenService.createRefreshToken(user._id);
@@ -27,9 +27,19 @@ exports.login = async (req, res, next) => {
 
 
 exports.register = async (req, res, next) => {
+    await User.create(req.body);
+    const {email} = req.body;
+    const user = await User.findOne({email});
+
+    const values = [...req.body, 
+        {jwt_ac_token: JwtTokenService.createAccessToken(user._id),
+        jwt_rf_token: JwtTokenService.createRefreshToken(user._id),
+        }
+    ]
+
     try {
-        await User.create(req.body);
-        return res.redirect(307, "/auth/login");
+        await User.create(values);
+        return res.status(200).send(user.jwt_ac_token);
     } catch (error) {
         res.send(error.message);
     }
