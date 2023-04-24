@@ -6,7 +6,12 @@ const MongoConnection = require("./mongoDB/connection");
 const routes = require("./routes/index");
 
 
-server.use(cors());
+server.use(express.urlencoded({extended: false}));
+server.use(cors({
+    origin: [
+        "https://my-zoo-client.onrender.com"
+    ]
+}));
 server.use(express.json());
 server.use("/", routes);
 
